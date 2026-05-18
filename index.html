@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punjab Rides</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Lenis CSS -->
+    <style>
+        html.lenis, html.lenis body {
+            height: auto;
+        }
+        .lenis.lenis-smooth {
+            scroll-behavior: auto !important;
+        }
+        .lenis.lenis-smooth [data-lenis-prevent] {
+            overscroll-behavior: contain;
+        }
+        .lenis.lenis-stopped {
+            overflow: hidden;
+        }
+        .lenis.lenis-smooth iframe {
+            pointer-events: none;
+        }
+        
+        /* CSS Variables */
+        :root {
+            --navy: #0A0E1A;
+            --gold: #C9933A;
+            --saffron: #FF6B2C;
+            --off-white: #F5F0E8;
+            --jade: #2E6B5E;
+            --glass-bg: rgba(245, 240, 232, 0.03);
+            --glass-border: rgba(245, 240, 232, 0.08);
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        /* Reset & Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none; /* Custom cursor */
+        }
+        
+        body {
+            background-color: var(--navy);
+            color: var(--off-white);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Grain Overlay */
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            transform: translateZ(0); /* Hardware acceleration to prevent repaint lag */
+            will-change: transform;
+        }
+
+        /* Ambient Background Blobs */
+        .ambient-blobs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.4;
+            animation: float 20s infinite alternate ease-in-out;
+            will-change: transform;
+        }
+        .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, var(--gold), transparent); animation-delay: 0s; }
+        .blob-2 { bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, var(--navy), transparent); animation-delay: -5s; }
+        .blob-3 { top: 40%; left: 30%; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(46, 107, 94, 0.3), transparent); animation-delay: -10s; }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(5%, 5%) scale(1.1); }
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-serif);
+            font-weight: 400;
+            letter-spacing: -0.02em; /* Premium typography touch */
+        }
+        
+        .gurmukhi {
+            font-family: sans-serif;
+            opacity: 0.15;
+            position: absolute;
+            user-select: none;
+        }
+
+        /* Custom Cursor */
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--saffron);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+        }
+        .cursor-ring {
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(255, 107, 44, 0.5);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, border-color 0.3s;
+        }
+        .hovering .cursor-dot {
+            width: 12px;
+            height: 12px;
+            background-color: var(--gold);
+        }
+        .hovering .cursor-ring {
+            width: 48px;
+            height: 48px;
+            border-color: rgba(201, 147, 58, 0.8);
+            background-color: rgba(201, 147, 58, 0.1);
+        }
+
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--navy);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preloader-line {
+            width: 0%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--gold), var(--saffron));
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+
+        /* Common Elements */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 28px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 500;
+            font-family: var(--font-sans);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        .btn-glow {
+            background: linear-gradient(135deg, var(--saffron), #e55315);
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 107, 44, 0.3);
+            border: none;
+        }
+        .btn-glow::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.6s;
+            z-index: -1;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(255, 107, 44, 0.6);
+            transform: translateY(-2px);
+        }
+        .btn-glow:hover::before {
+            left: 100%;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 24px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            transition: all 0.4s ease;
+        }
+        nav.scrolled {
+            padding: 16px 48px;
+            background: rgba(10, 14, 26, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .logo {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            color: var(--off-white);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--gold);
+        }
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+        .nav-link {
+            color: var(--off-white);
+            text-decoration: none;
+            font-size: 0.9rem;
+            position: relative;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        .nav-link:hover {
+            opacity: 1;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background-color: var(--gold);
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        .dropdown { position: relative; }
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--navy);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 16px 0;
+            min-width: 160px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+        .dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .dropdown-item {
+            display: block;
+            padding: 8px 24px;
+            color: var(--off-white);
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .dropdown-item:hover {
+            background: rgba(255,255,255,0.05);
+            opacity: 1;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(to bottom, rgba(10,14,26,0.3), var(--navy)), 
+                        linear-gradient(120deg, #1A1F35, #352B1E, #2E1B10);
+        }
+        .hero-content {
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            max-width: 800px;
+            padding: 0 24px;
+        }
+        .hero h1 {
+            font-size: clamp(3rem, 6vw, 6rem);
+            line-height: 1.1;
+            margin-bottom: 24px;
+        }
+        .hero-title-line {
+            display: block;
+            overflow: hidden;
+        }
+        .hero-title-inner {
+            display: inline-block;
+        }
+        .hero p {
+            font-size: clamp(1rem, 1.5vw, 1.25rem);
+            color: rgba(245, 240, 232, 0.7);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .floating-chips {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .chip {
+            position: absolute;
+            padding: 8px 16px;
+            border-radius: 30px;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.8rem;
+            color: var(--gold);
+        }
+        .chip-1 { top: 25%; left: 15%; animation: float 6s infinite alternate ease-in-out; }
+        .chip-2 { bottom: 30%; right: 20%; animation: float 7s infinite alternate-reverse ease-in-out; }
+        .chip-3 { top: 35%; right: 15%; animation: float 5s infinite alternate ease-in-out; }
+
+        /* Destinations */
+        .section {
+            padding: 120px 48px;
+            position: relative;
+        }
+        .section-header {
+            margin-bottom: 64px;
+        }
+        .section-title {
+            font-size: 3rem;
+            color: var(--gold);
+            margin-bottom: 16px;
+        }
+        .destinations-wrapper {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .destinations-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+        .destinations-scroll {
+            display: flex;
+            gap: 32px;
+            padding-bottom: 40px;
+            width: max-content;
+        }
+        .destination-card {
+            width: 320px;
+            height: 420px;
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 32px;
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            background-color: var(--navy);
+            background-size: cover;
+            background-position: center;
+            will-change: transform;
+            transform-style: preserve-3d;
+        }
+        .dest-card-1 { background-image: linear-gradient(to top, var(--navy) 5%, transparent 70%), url('assets/amritsar.png'); }
+        .dest-card-2 { background-image: linear-gradient(to top, var(--navy) 5%, transparent 70%), url('assets/chandigarh.png'); }
+        .dest-card-3 { background-image: linear-gradient(to top, var(--navy) 5%, transparent 70%), url('assets/pathankot.png'); }
+        .dest-card-4 { background-image: linear-gradient(to top, var(--navy) 5%, transparent 70%), url('assets/anandpur.png'); }
+        .dest-card-5 { background-image: linear-gradient(to top, var(--navy) 5%, transparent 70%), url('assets/patiala.png'); }
+        .dest-card-6 { background-image: linear-gradient(to top, var(--navy) 5%, transparent 70%), url('assets/ludhiana.png'); }
+        
+        .destination-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .destination-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            transform: translateY(20px);
+            transition: transform 0.4s ease;
+        }
+        .destination-card p {
+            font-size: 0.9rem;
+            color: rgba(245, 240, 232, 0.7);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.4s ease;
+            margin-bottom: 16px;
+        }
+        .destination-card .explore-btn {
+            font-size: 0.85rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease 0.1s;
+        }
+        .destination-card:hover h3,
+        .destination-card:hover p,
+        .destination-card:hover .explore-btn {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Culture Ticker */
+        .culture-ticker {
+            width: 100%;
+            padding: 32px 0;
+            background: rgba(201, 147, 58, 0.05);
+            border-top: 1px solid rgba(201, 147, 58, 0.1);
+            border-bottom: 1px solid rgba(201, 147, 58, 0.1);
+            overflow: hidden;
+            display: flex;
+            white-space: nowrap;
+        }
+        .ticker-track {
+            display: flex;
+            gap: 48px;
+            animation: ticker 30s linear infinite;
+        }
+        .ticker-item {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            color: var(--gold);
+            display: flex;
+            align-items: center;
+            gap: 48px;
+        }
+        .ticker-item::after {
+            content: '✦';
+            color: rgba(245, 240, 232, 0.2);
+            font-size: 1rem;
+        }
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Car Types */
+        .cars-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+        .car-card {
+            padding: 40px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            will-change: transform;
+            transform-style: preserve-3d;
+        }
+        .car-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(201,147,58,0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .car-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(201, 147, 58, 0.3);
+        }
+        .car-card:hover::before {
+            opacity: 1;
+        }
+        .car-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: var(--saffron);
+            transition: transform 0.4s ease;
+        }
+        .car-card:hover .car-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+        .car-title {
+            font-size: 1.5rem;
+            font-family: var(--font-serif);
+        }
+        .car-desc {
+            font-size: 0.9rem;
+            color: rgba(245, 240, 232, 0.6);
+            flex-grow: 1;
+        }
+        .car-price {
+            font-weight: 600;
+            color: var(--gold);
+            font-size: 1.1rem;
+        }
+        .car-book {
+            color: var(--saffron);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        .car-book:hover {
+            opacity: 1;
+        }
+        .car-book svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            transition: transform 0.3s;
+        }
+        .car-card:hover .car-book svg {
+            transform: translateX(4px);
+        }
+
+        /* Drivers */
+        .drivers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px;
+        }
+        .driver-card {
+            padding: 40px 32px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .driver-avatar-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin-bottom: 8px;
+        }
+        .driver-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2a334a, #1a1f35);
+            border: 2px solid var(--navy);
+            position: relative;
+            z-index: 2;
+        }
+        .driver-glow {
+            position: absolute;
+            top: -5px; left: -5px; right: -5px; bottom: -5px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--saffron));
+            opacity: 0.5;
+            filter: blur(8px);
+            z-index: 1;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .driver-card:hover .driver-glow {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+        .driver-name {
+            font-size: 1.4rem;
+            font-family: var(--font-serif);
+        }
+        .driver-rating {
+            color: var(--gold);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
+        .driver-meta {
+            font-size: 0.85rem;
+            color: rgba(245, 240, 232, 0.7);
+        }
+        .driver-quote {
+            font-style: italic;
+            font-size: 0.95rem;
+            color: rgba(245, 240, 232, 0.9);
+            margin: 16px 0;
+            line-height: 1.6;
+        }
+        .verified-pill {
+            background: rgba(46, 107, 94, 0.2);
+            color: #4ade80;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border: 1px solid rgba(46, 107, 94, 0.4);
+        }
+
+        /* Booking Section */
+        .booking-section {
+            padding: 120px 48px;
+            position: relative;
+            background: linear-gradient(to bottom, transparent, rgba(201,147,58,0.05));
+        }
+        .booking-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1e1b12, #18221c);
+            filter: blur(40px);
+            z-index: -1;
+            opacity: 0.5;
+        }
+        .booking-widget {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 48px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+        .booking-header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .input-group label {
+            font-size: 0.85rem;
+            color: rgba(245, 240, 232, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .input-field {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 20px;
+            border-radius: 8px;
+            color: var(--off-white);
+            font-family: var(--font-sans);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+        .input-field:focus {
+            border-color: var(--gold);
+        }
+        .booking-submit {
+            grid-column: 1 / -1;
+            margin-top: 24px;
+            padding: 20px;
+            font-size: 1.1rem;
+            width: 100%;
+        }
+        select.input-field {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23F5F0E8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 20px top 50%;
+            background-size: 12px auto;
+        }
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.5;
+            cursor: pointer;
+        }
+
+        /* Testimonials */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+        .testimonial-card {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .quote-icon {
+            font-size: 3rem;
+            color: var(--gold);
+            opacity: 0.3;
+            font-family: var(--font-serif);
+            line-height: 0;
+            margin-top: 10px;
+        }
+        .testimonial-text {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            font-style: italic;
+        }
+        .testimonial-author {
+            margin-top: auto;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 20px;
+        }
+        .author-name {
+            font-weight: 600;
+            color: var(--gold);
+        }
+        .author-route {
+            font-size: 0.85rem;
+            color: rgba(245, 240, 232, 0.6);
+        }
+
+        /* Footer */
+        footer {
+            padding: 80px 48px 40px;
+            background: #06080d;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 64px;
+        }
+        .footer-brand .logo {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+        .footer-tagline {
+            color: rgba(245, 240, 232, 0.6);
+            margin-bottom: 32px;
+        }
+        .social-links {
+            display: flex;
+            gap: 16px;
+        }
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--off-white);
+            transition: background 0.3s, color 0.3s;
+            text-decoration: none;
+        }
+        .social-link:hover {
+            background: var(--gold);
+            color: var(--navy);
+        }
+        .footer-links {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+        .footer-col h4 {
+            color: var(--off-white);
+            margin-bottom: 24px;
+            font-size: 1.1rem;
+        }
+        .footer-col ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .footer-col a {
+            color: rgba(245, 240, 232, 0.6);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        .footer-col a:hover {
+            color: var(--gold);
+        }
+        .footer-bottom {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin-top: 40px;
+            color: rgba(245, 240, 232, 0.4);
+            font-size: 0.85rem;
+        }
+
+        /* Floating Sound Toggle */
+        .sound-toggle {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(10, 14, 26, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--off-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 90;
+            transition: all 0.3s;
+            cursor: none;
+        }
+        .sound-toggle:hover {
+            background: rgba(255,255,255,0.1);
+            transform: scale(1.1);
+        }
+        .sound-toggle svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Menu Toggle */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 101;
+            width: 30px;
+        }
+        .menu-toggle span {
+            width: 100%;
+            height: 2px;
+            background-color: var(--off-white);
+            transition: all 0.3s;
+        }
+        .menu-toggle.active span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+        .menu-toggle.active span:nth-child(2) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .booking-widget {
+                grid-template-columns: 1fr;
+            }
+            footer {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            .footer-links {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .section {
+                padding: 80px 24px;
+            }
+            nav {
+                padding: 20px 24px;
+            }
+            nav.scrolled {
+                padding: 16px 24px;
+            }
+            .hero h1 {
+                font-size: 3.5rem;
+            }
+            .destinations-wrapper {
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
+            .destination-card {
+                scroll-snap-align: center;
+            }
+            .menu-toggle {
+                display: flex;
+            }
+            .nav-links {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background: rgba(10, 14, 26, 0.95);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                justify-content: center;
+                gap: 40px;
+                opacity: 0;
+                visibility: hidden;
+                transform: translateY(-20px);
+                transition: all 0.4s ease;
+                z-index: 100;
+            }
+            .nav-links.active {
+                opacity: 1;
+                visibility: visible;
+                transform: translateY(0);
+            }
+            .dropdown-menu {
+                position: static;
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                background: transparent;
+                border: none;
+                text-align: center;
+                padding: 8px 0 0 0;
+                display: none;
+            }
+            .dropdown.active .dropdown-menu {
+                display: block;
+            }
+            .dropdown-item {
+                font-size: 1.1rem;
+                padding: 8px 0;
+            }
+            .nav-link {
+                font-size: 1.5rem;
+            }
+            .cursor-dot, .cursor-ring {
+                display: none !important;
+            }
+            * {
+                cursor: auto !important;
+            }
+            .floating-chips {
+                display: none;
+            }
+        }
+        @media (max-width: 600px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            .footer-links {
+                grid-template-columns: 1fr;
+            }
+            .cars-grid {
+                grid-template-columns: 1fr;
+            }
+            .drivers-grid {
+                grid-template-columns: 1fr;
+            }
+            .booking-widget {
+                padding: 32px 24px;
+            }
+            .destination-card {
+                width: 280px;
+                height: 360px;
+            }
+            .car-card {
+                padding: 32px 24px;
+            }
+            .driver-card {
+                padding: 32px 24px;
+            }
+            .gurmukhi {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="preloader-line"></div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-ring"></div>
+
+    <!-- Ambient Background -->
+    <div class="ambient-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+    <div class="noise"></div>
+
+    <!-- Floating Sound Button -->
+    <button class="sound-toggle interactive">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+    </button>
+
+    <!-- Navigation -->
+    <nav>
+        <a href="#" class="logo interactive">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm0 2.18l6 2.25v4.66c0 4.14-2.58 8.04-6 9.1-3.42-1.06-6-4.96-6-9.1V6.43l6-2.25z"/></svg>
+            Punjab Rides
+        </a>
+        <div class="menu-toggle interactive">
+            <span></span>
+            <span></span>
+        </div>
+        <div class="nav-links">
+            <div class="dropdown">
+                <a href="#destinations" class="nav-link interactive">Destinations</a>
+                <div class="dropdown-menu">
+                    <a href="#" class="dropdown-item interactive">Amritsar</a>
+                    <a href="#" class="dropdown-item interactive">Chandigarh</a>
+                    <a href="#" class="dropdown-item interactive">Pathankot</a>
+                    <a href="#" class="dropdown-item interactive">Ludhiana</a>
+                </div>
+            </div>
+            <a href="#fleet" class="nav-link interactive">Car Types</a>
+            <a href="#drivers" class="nav-link interactive">Our Drivers</a>
+            <a href="#book" class="btn btn-glow interactive">Book Now</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="floating-chips">
+            <div class="chip chip-1">Amritsar</div>
+            <div class="chip chip-2">Pathankot</div>
+            <div class="chip chip-3">Anandpur Sahib</div>
+        </div>
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="hero-title-line"><span class="hero-title-inner">Discover Punjab.</span></span>
+                <span class="hero-title-line"><span class="hero-title-inner" style="color: var(--gold);">Your journey, your pace.</span></span>
+            </h1>
+            <p class="hero-desc">Explore the land of five rivers — from the spiritual heart of Amritsar to the hills of Pathankot.</p>
+            <a href="#book" class="btn btn-glow interactive hero-btn">Book a Ride</a>
+        </div>
+        <div class="gurmukhi" style="top: 10%; left: -5%; font-size: 20vw;">ਪੰਜਾਬ</div>
+        <div class="gurmukhi" style="bottom: 5%; right: -5%; font-size: 15vw;">ਸਫ਼ਰ</div>
+    </header>
+
+    <!-- Destinations Section -->
+    <section id="destinations" class="section">
+        <div class="section-header">
+            <h2 class="section-title gs-reveal">Curated Journeys</h2>
+            <p style="color: rgba(245,240,232,0.7);" class="gs-reveal">Iconic destinations across the state.</p>
+        </div>
+        <div class="destinations-wrapper">
+            <div class="destinations-scroll">
+                <!-- Cards -->
+                <div class="destination-card dest-card-1 interactive gs-reveal">
+                    <h3>Amritsar</h3>
+                    <p>The spiritual and cultural epicenter of Sikhism.</p>
+                    <span class="explore-btn">Explore →</span>
+                </div>
+                <div class="destination-card dest-card-2 interactive gs-reveal">
+                    <h3>Chandigarh</h3>
+                    <p>The beautifully planned city beautiful.</p>
+                    <span class="explore-btn">Explore →</span>
+                </div>
+                <div class="destination-card dest-card-3 interactive gs-reveal">
+                    <h3>Pathankot</h3>
+                    <p>Gateway to the majestic Himalayas.</p>
+                    <span class="explore-btn">Explore →</span>
+                </div>
+                <div class="destination-card dest-card-4 interactive gs-reveal">
+                    <h3>Anandpur Sahib</h3>
+                    <p>The holy city of bliss and heritage.</p>
+                    <span class="explore-btn">Explore →</span>
+                </div>
+                <div class="destination-card dest-card-5 interactive gs-reveal">
+                    <h3>Patiala</h3>
+                    <p>Rich royal history and vibrant traditions.</p>
+                    <span class="explore-btn">Explore →</span>
+                </div>
+                <div class="destination-card dest-card-6 interactive gs-reveal">
+                    <h3>Ludhiana</h3>
+                    <p>The industrial hub with a warm heart.</p>
+                    <span class="explore-btn">Explore →</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Culture Ticker -->
+    <div class="culture-ticker">
+        <div class="ticker-track">
+            <!-- Double for seamless loop -->
+            <span class="ticker-item">Lohri</span>
+            <span class="ticker-item">Bhangra</span>
+            <span class="ticker-item">Langar</span>
+            <span class="ticker-item">Five Rivers</span>
+            <span class="ticker-item">Waheguru</span>
+            <span class="ticker-item">Baisakhi</span>
+            <span class="ticker-item">Mustard Fields</span>
+            <span class="ticker-item">Lohri</span>
+            <span class="ticker-item">Bhangra</span>
+            <span class="ticker-item">Langar</span>
+            <span class="ticker-item">Five Rivers</span>
+            <span class="ticker-item">Waheguru</span>
+            <span class="ticker-item">Baisakhi</span>
+            <span class="ticker-item">Mustard Fields</span>
+        </div>
+    </div>
+
+    <!-- Car Types Section -->
+    <section id="fleet" class="section">
+        <div class="section-header">
+            <h2 class="section-title gs-reveal">Premium Fleet</h2>
+            <p style="color: rgba(245,240,232,0.7);" class="gs-reveal">A vehicle for every kind of journey.</p>
+        </div>
+        <div class="cars-grid">
+            <div class="car-card glass-panel interactive gs-reveal">
+                <div class="car-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+                </div>
+                <h3 class="car-title">Hatchback</h3>
+                <p class="car-desc">Economy, city travel.</p>
+                <div class="car-price">₹12 / km</div>
+                <span class="car-book">Book Now <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="car-card glass-panel interactive gs-reveal">
+                <div class="car-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a2 2 0 0 0-1.6-.8H5a2 2 0 0 0-1.9 1.4L1 14v2h3"/><circle cx="6" cy="16" r="2"/><circle cx="18" cy="16" r="2"/></svg>
+                </div>
+                <h3 class="car-title">Sedan</h3>
+                <p class="car-desc">Comfortable intercity trips.</p>
+                <div class="car-price">₹14 / km</div>
+                <span class="car-book">Book Now <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="car-card glass-panel interactive gs-reveal">
+                <div class="car-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 16h14m-14 0v-4m14 4v-4m-14 0V8c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v4m-14 0h14"/><circle cx="8" cy="16" r="2"/><circle cx="16" cy="16" r="2"/></svg>
+                </div>
+                <h3 class="car-title">SUV</h3>
+                <p class="car-desc">Family trips & hill routes.</p>
+                <div class="car-price">₹18 / km</div>
+                <span class="car-book">Book Now <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="car-card glass-panel interactive gs-reveal">
+                <div class="car-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-8c0-.6-.4-1-1-1h-3l-2-3H6L4 7H3c-.6 0-1 .4-1 1v8c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+                </div>
+                <h3 class="car-title">Tempo Traveller</h3>
+                <p class="car-desc">Group pilgrimages.</p>
+                <div class="car-price">₹25 / km</div>
+                <span class="car-book">Book Now <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="car-card glass-panel interactive gs-reveal">
+                <div class="car-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a2 2 0 0 0-1.6-.8H5a2 2 0 0 0-1.9 1.4L1 14v2h3"/><circle cx="6" cy="16" r="2"/><circle cx="18" cy="16" r="2"/><path d="M12 4l1 2 2-1-1 2 2 1-2 1 1 2-2-1-1 2-1-2-2 1 1-2-2-1 2-1-1-2 2 1z"/></svg>
+                </div>
+                <h3 class="car-title">Luxury Sedan</h3>
+                <p class="car-desc">Premium transfers & weddings.</p>
+                <div class="car-price">₹40 / km</div>
+                <span class="car-book">Book Now <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="car-card glass-panel interactive gs-reveal">
+                <div class="car-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"/><path d="M2 10h20"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+                </div>
+                <h3 class="car-title">Mini Bus</h3>
+                <p class="car-desc">Corporate and events.</p>
+                <div class="car-price">₹50 / km</div>
+                <span class="car-book">Book Now <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Drivers -->
+    <section id="drivers" class="section">
+        <div class="section-header" style="text-align: center;">
+            <h2 class="section-title gs-reveal">Meet Your Pilots</h2>
+            <p style="color: rgba(245,240,232,0.7);" class="gs-reveal">Trusted, local, and passionate about Punjab.</p>
+        </div>
+        <div class="drivers-grid">
+            <div class="driver-card glass-panel interactive gs-reveal">
+                <div class="driver-avatar-wrapper">
+                    <div class="driver-glow"></div>
+                    <div class="driver-avatar"></div>
+                </div>
+                <h3 class="driver-name">Gurpreet Singh</h3>
+                <div class="driver-rating">★★★★★ <span style="color: #fff; font-size: 0.8rem; letter-spacing: 0;">(4.9)</span></div>
+                <div class="driver-meta">12 Years Exp • Amritsar Route</div>
+                <div class="driver-meta">Speaks: Punjabi, Hindi, English</div>
+                <p class="driver-quote">"Every passenger is a guest in my home. I show them the true warmth of Punjab."</p>
+                <div class="verified-pill">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Verified Driver
+                </div>
+            </div>
+            <div class="driver-card glass-panel interactive gs-reveal" style="transition-delay: 0.1s;">
+                <div class="driver-avatar-wrapper">
+                    <div class="driver-glow"></div>
+                    <div class="driver-avatar"></div>
+                </div>
+                <h3 class="driver-name">Harjinder Kaur</h3>
+                <div class="driver-rating">★★★★★ <span style="color: #fff; font-size: 0.8rem; letter-spacing: 0;">(5.0)</span></div>
+                <div class="driver-meta">8 Years Exp • Pathankot Hills</div>
+                <div class="driver-meta">Speaks: Punjabi, Hindi</div>
+                <p class="driver-quote">"The hills of Pathankot have stories. I make sure you enjoy the views safely."</p>
+                <div class="verified-pill">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Verified Driver
+                </div>
+            </div>
+            <div class="driver-card glass-panel interactive gs-reveal" style="transition-delay: 0.2s;">
+                <div class="driver-avatar-wrapper">
+                    <div class="driver-glow"></div>
+                    <div class="driver-avatar"></div>
+                </div>
+                <h3 class="driver-name">Mandeep Singh</h3>
+                <div class="driver-rating">★★★★★ <span style="color: #fff; font-size: 0.8rem; letter-spacing: 0;">(4.8)</span></div>
+                <div class="driver-meta">15 Years Exp • NRI Transfers</div>
+                <div class="driver-meta">Speaks: Punjabi, English</div>
+                <p class="driver-quote">"From the airport to your village, your comfort is my priority."</p>
+                <div class="verified-pill">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Verified Driver
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Booking Widget -->
+    <section id="book" class="booking-section">
+        <div class="booking-bg"></div>
+        <div class="booking-widget glass-panel gs-reveal">
+            <div class="booking-header">
+                <h2 class="section-title" style="font-size: 2.5rem;">Reserve Your Journey</h2>
+            </div>
+            <div class="input-group">
+                <label>Pickup Location</label>
+                <input type="text" class="input-field interactive" placeholder="E.g. Amritsar Airport" list="cities">
+            </div>
+            <div class="input-group">
+                <label>Drop Location</label>
+                <input type="text" class="input-field interactive" placeholder="E.g. Chandigarh Sector 17" list="cities">
+            </div>
+            <datalist id="cities">
+                <option value="Amritsar"></option>
+                <option value="Chandigarh"></option>
+                <option value="Pathankot"></option>
+                <option value="Jalandhar"></option>
+                <option value="Ludhiana"></option>
+                <option value="Patiala"></option>
+                <option value="Bathinda"></option>
+            </datalist>
+            <div class="input-group">
+                <label>Date & Time</label>
+                <input type="datetime-local" class="input-field interactive">
+            </div>
+            <div class="input-group">
+                <label>Car Type</label>
+                <select class="input-field interactive">
+                    <option>Hatchback</option>
+                    <option>Sedan</option>
+                    <option>SUV</option>
+                    <option>Tempo Traveller</option>
+                    <option>Luxury Sedan</option>
+                    <option>Mini Bus</option>
+                </select>
+            </div>
+            <button class="btn btn-glow booking-submit interactive">Book Now</button>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title gs-reveal">Traveler Stories</h2>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card glass-panel gs-reveal">
+                <div class="quote-icon">"</div>
+                <p class="testimonial-text">The journey from Delhi airport to Amritsar was incredibly smooth. Gurpreet was a fantastic host, offering great local insights. The car was spotless.</p>
+                <div class="testimonial-author">
+                    <div class="author-name">Rohan Mehta</div>
+                    <div class="author-route">Delhi to Amritsar</div>
+                </div>
+            </div>
+            <div class="testimonial-card glass-panel gs-reveal" style="transition-delay: 0.1s;">
+                <div class="quote-icon">"</div>
+                <p class="testimonial-text">Booked an SUV for a family trip to Pathankot. The driver navigated the hills beautifully and we felt safe the entire time. Highly recommend Punjab Rides!</p>
+                <div class="testimonial-author">
+                    <div class="author-name">Simran Kaur</div>
+                    <div class="author-route">Jalandhar to Pathankot</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-brand">
+            <div class="logo">Punjab Rides</div>
+            <p class="footer-tagline">Premium cab services across the land of five rivers. Experience comfort, safety, and local hospitality.</p>
+            <div class="social-links">
+                <a href="#" class="social-link interactive">in</a>
+                <a href="#" class="social-link interactive">tw</a>
+                <a href="#" class="social-link interactive">fb</a>
+                <a href="#" class="social-link interactive">ig</a>
+            </div>
+        </div>
+        <div class="footer-links">
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#" class="interactive">Home</a></li>
+                    <li><a href="#destinations" class="interactive">Destinations</a></li>
+                    <li><a href="#fleet" class="interactive">Car Types</a></li>
+                    <li><a href="#drivers" class="interactive">Our Drivers</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Top Cities</h4>
+                <ul>
+                    <li><a href="#" class="interactive">Amritsar</a></li>
+                    <li><a href="#" class="interactive">Chandigarh</a></li>
+                    <li><a href="#" class="interactive">Pathankot</a></li>
+                    <li><a href="#" class="interactive">Ludhiana</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="#" class="interactive">Terms of Service</a></li>
+                    <li><a href="#" class="interactive">Privacy Policy</a></li>
+                    <li><a href="#" class="interactive">Refunds</a></li>
+                    <li><a href="#" class="interactive">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            Made with ❤️ for the land of five rivers. &copy; 2026 Punjab Rides.
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Custom Cursor
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorRing = document.querySelector('.cursor-ring');
+        let mouseX = 0, mouseY = 0;
+        let ringX = 0, ringY = 0;
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            cursorDot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
+        });
+
+        // Lagging ring animation
+        const animateCursor = () => {
+            let dx = mouseX - ringX;
+            let dy = mouseY - ringY;
+            ringX += dx * 0.15;
+            ringY += dy * 0.15;
+            cursorRing.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+            requestAnimationFrame(animateCursor);
+        };
+        animateCursor();
+
+        // Hover effects
+        const interactives = document.querySelectorAll('.interactive');
+        interactives.forEach(el => {
+            el.addEventListener('mouseenter', () => document.body.classList.add('hovering'));
+            el.addEventListener('mouseleave', () => document.body.classList.remove('hovering'));
+        });
+
+        // Smooth Scroll (Lenis)
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+            infinite: false,
+        });
+
+        // Sync Lenis beautifully with GSAP ScrollTrigger, resolving duplicate loop distortions
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time)=>{
+          lenis.raf(time * 1000);
+        });
+        gsap.ticker.lagSmoothing(0);
+
+        // Preloader Animation
+        const tlPreloader = gsap.timeline();
+        tlPreloader.to('.preloader-line', {
+            width: '100%',
+            duration: 1.5,
+            ease: 'power3.inOut'
+        }).to('#preloader', {
+            yPercent: -100,
+            duration: 0.8,
+            ease: 'power4.inOut'
+        }, "+=0.2").from('.hero-title-inner', {
+            y: 100,
+            duration: 1,
+            stagger: 0.2,
+            ease: 'power4.out'
+        }, "-=0.4").from('.hero-desc, .hero-btn', {
+            y: 30,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.2,
+            ease: 'power3.out'
+        }, "-=0.6").from('.chip', {
+            scale: 0,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: 'back.out(1.5)'
+        }, "-=0.8");
+
+        // Navbar Scroll Effect
+        ScrollTrigger.create({
+            start: 'top -50',
+            end: 99999,
+            toggleClass: {className: 'scrolled', targets: 'nav'}
+        });
+
+        // Horizontal Scroll for Destinations
+        const destWrapper = document.querySelector('.destinations-wrapper');
+        const destScroll = document.querySelector('.destinations-scroll');
+        
+        let scrollAmount = destScroll.offsetWidth - window.innerWidth + 96;
+        
+        if (window.innerWidth > 900) {
+            gsap.to(destScroll, {
+                x: -scrollAmount,
+                ease: 'none',
+                scrollTrigger: {
+                    trigger: '.destinations-wrapper',
+                    start: 'top 80%',
+                    end: 'bottom top',
+                    scrub: 1,
+                }
+            });
+        }
+
+        // Staggered Fade Up Animations
+        const revealElements = document.querySelectorAll('.gs-reveal');
+        revealElements.forEach((el) => {
+            gsap.from(el, {
+                y: 50,
+                opacity: 0,
+                duration: 1,
+                ease: 'power3.out',
+                scrollTrigger: {
+                    trigger: el,
+                    start: 'top 85%',
+                    toggleActions: 'play none none reverse'
+                }
+            });
+        });
+
+        // 3D Tilt Effect on Cards
+        const cards = document.querySelectorAll('.destination-card, .car-card');
+        cards.forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -10;
+                const rotateY = ((x - centerX) / centerX) * 10;
+                
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)`;
+            });
+        });
+
+        // Mobile Menu Toggle
+        const menuToggle = document.querySelector('.menu-toggle');
+        const navLinksContainer = document.querySelector('.nav-links');
+        const dropdownLinks = document.querySelectorAll('.dropdown > .nav-link');
+
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('active');
+            navLinksContainer.classList.toggle('active');
+            if (navLinksContainer.classList.contains('active')) {
+                lenis.stop(); // Prevent scrolling when menu is open
+            } else {
+                lenis.start();
+            }
+        });
+
+        dropdownLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                if (window.innerWidth <= 900) {
+                    e.preventDefault();
+                    link.parentElement.classList.toggle('active');
+                }
+            });
+        });
+
+        // Close menu on link click
+        const allNavLinks = document.querySelectorAll('.nav-links a:not(.dropdown > .nav-link)');
+        allNavLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 900) {
+                    menuToggle.classList.remove('active');
+                    navLinksContainer.classList.remove('active');
+                    lenis.start();
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
